@@ -1,0 +1,21 @@
+[package]
+name = "rt-api"
+description = "The review-tools JSON API's types and the review document format: parser, differ, secret detector. No I/O."
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94.1"
+license = "MIT"
+repository = "https://github.com/gschjetne/rt-api"
+
+[features]
+# The OpenAPI schema of every type, for servers that publish one.
+openapi = ["dep:utoipa"]
+
+[dependencies]
+jiff = { version = "0.2.38", default-features = false, features = ["std", "serde"] }
+pulldown-cmark = { version = "0.13.4", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10.0"
+thiserror = "2"
+utoipa = { version = "6.0.0", optional = true }

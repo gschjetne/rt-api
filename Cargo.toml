@@ -1,7 +1,7 @@
 [package]
 name = "rt-api"
 description = "The review-tools JSON API's types and the review document format: parser, differ, secret detector. No I/O."
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.94.1"
 license = "MIT"

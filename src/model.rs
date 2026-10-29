@@ -57,6 +57,10 @@ api_types! {
         /// The app was uninstalled from the repository; its sessions stay readable.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         pub archived: bool,
+        /// For a project on no code host the instance knows: the one person who may see
+        /// and work it. Nobody can be invited to its sessions.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pub owner: Option<UserRef>,
         #[cfg_attr(feature = "openapi", schema(value_type = String, format = DateTime))]
         pub created_at: Timestamp,
     }

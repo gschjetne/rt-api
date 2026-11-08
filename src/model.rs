@@ -667,6 +667,57 @@ api_types! {
         /// The Markdown record of the session.
         pub markdown: String,
     }
+
+    /// What a search of one's reviews found (`GET /api/v1/search`).
+    pub struct SearchResults {
+        pub hits: Vec<SearchHit>,
+        /// How many of the person's reviews are not searched yet: the first search builds
+        /// the index a batch at a time, and each search after it reads the next batch.
+        pub indexing: usize,
+    }
+
+    /// A place in a review that matched.
+    pub struct SearchHit {
+        /// The review's id.
+        pub session: String,
+        pub title: String,
+        pub project: String,
+        pub closed: bool,
+        pub kind: HitKind,
+        /// The heading, decision or file it is in.
+        pub label: String,
+        /// Where it is on the instance, from its root: the review page at its anchor
+        /// (`/sessions/<id>#s-<heading>`, `#d-<n>`, `#t-<seq>`), or the file.
+        pub href: String,
+        /// Some of the text around what matched, in order.
+        pub snippet: Vec<SnippetPart>,
+    }
+
+    /// What a search hit is.
+    #[serde(rename_all = "kebab-case")]
+    #[derive(Copy, Eq)]
+    pub enum HitKind {
+        /// The review's title, project and work package.
+        Title,
+        /// A part of its document, under a heading.
+        Section,
+        Decision,
+        /// A sent answer.
+        Answer,
+        /// An answer not sent yet.
+        Draft,
+        /// A note in the log.
+        Note,
+        /// An attachment.
+        File,
+    }
+
+    /// A piece of a snippet, marked where it is what was searched for.
+    pub struct SnippetPart {
+        pub text: String,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        pub mark: bool,
+    }
 }
 
 impl Answer {
@@ -769,6 +820,20 @@ impl std::str::FromStr for WorkPackageStatus {
     }
 }
 
+impl std::fmt::Display for HitKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            HitKind::Title => "title",
+            HitKind::Section => "section",
+            HitKind::Decision => "decision",
+            HitKind::Answer => "answer",
+            HitKind::Draft => "draft",
+            HitKind::Note => "note",
+            HitKind::File => "file",
+        })
+    }
+}
+
 impl std::fmt::Display for ResponseState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
@@ -777,5 +842,35 @@ impl std::fmt::Display for ResponseState {
             ResponseState::Stale => "stale",
             ResponseState::RecordedFromChat => "recorded-from-chat",
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Search results as the server sends them: kinds in kebab case, and `mark` only on
+    /// what matched.
+    #[test]
+    fn search_results_on_the_wire() {
+        let json = serde_json::json!({
+            "hits": [{
+                "session": "k3x9",
+                "title": "Offline sync",
+                "project": "alice/app",
+                "closed": false,
+                "kind": "section",
+                "label": "Cache keys",
+                "href": "/sessions/k3x9#s-cache-keys",
+                "snippet": [{ "text": "keyed by the " }, { "text": "lockfile", "mark": true }],
+            }],
+            "indexing": 0,
+        });
+        let results: SearchResults = serde_json::from_value(json.clone()).unwrap();
+        assert_eq!(results.hits[0].kind, HitKind::Section);
+        assert!(!results.hits[0].snippet[0].mark);
+        assert!(results.hits[0].snippet[1].mark);
+        assert_eq!(serde_json::to_value(&results).unwrap(), json);
+        assert_eq!(HitKind::Draft.to_string(), "draft");
     }
 }

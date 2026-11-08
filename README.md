@@ -16,7 +16,7 @@ The client, `rt`, is in [rt-cli](https://github.com/gschjetne/rt-cli). Depend on
 release tag:
 
 ```toml
-rt-api = { git = "https://github.com/gschjetne/rt-api", tag = "v0.1.0" }
+rt-api = { git = "https://github.com/gschjetne/rt-api", tag = "v0.1.2" }
 ```
 
 `Project::repo_path` and `PrincipalKind::Local` belong to the local daemon, which is gone;
